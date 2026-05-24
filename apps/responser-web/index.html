@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Responser</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --border: #2a3038;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --code: #1f242c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px; }
+  header h1 { font-size: 22px; margin: 0; letter-spacing: 0.5px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+    padding: 16px; margin-bottom: 16px; }
+  label { display: block; color: var(--muted); margin-bottom: 6px; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.6px; }
+  select, textarea, input, button {
+    width: 100%; background: var(--code); color: var(--text); border: 1px solid var(--border);
+    border-radius: 4px; padding: 8px 10px; font: inherit; font-size: 14px;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  button { cursor: pointer; background: var(--accent); color: #0d1117; font-weight: 600;
+    border-color: var(--accent); margin-top: 12px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px;
+    background: var(--code); border: 1px solid var(--border); }
+  .status-queued { color: var(--muted); }
+  .status-running { color: var(--warn); }
+  .status-done { color: var(--good); }
+  .status-error { color: var(--bad); }
+  .answer h2 { font-size: 16px; margin: 0 0 8px; }
+  .answer p { margin: 8px 0; white-space: pre-wrap; }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 12px; }
+  .chip { display: inline-block; background: var(--code); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 7px; margin: 0 4px 4px 0; font-size: 12px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .perspectives { margin-top: 16px; }
+  .perspectives .item { border-left: 3px solid var(--accent); padding: 6px 12px; margin: 8px 0;
+    background: var(--code); border-radius: 0 4px 4px 0; }
+  .perspectives .name { color: var(--accent); font-weight: 600; font-size: 12px; }
+  .dissent .item { border-left-color: var(--warn); }
+  .dissent .name { color: var(--warn); }
+  .open .item { border-left-color: var(--muted); }
+  .amara .item { border-left-color: #a371f7; background: var(--code); }
+  .amara .name { color: #a371f7; font-weight: 600; font-size: 12px; }
+  .amara .verdict { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 11px;
+    margin-left: 6px; background: var(--code); border: 1px solid var(--border); }
+  .verdict-supports_answer { color: var(--good); border-color: var(--good) !important; }
+  .verdict-contradicts_answer { color: var(--bad); border-color: var(--bad) !important; }
+  .verdict-inconclusive { color: var(--muted); }
+  .amara .sources { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .amara .sources a { color: var(--accent); text-decoration: none; }
+  .amara .sources a:hover { text-decoration: underline; }
+  .amara .summary { color: var(--muted); font-style: italic; margin-top: 8px; padding: 6px 12px;
+    border-left: 2px solid var(--border); }
+  .branches { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .branches .label { color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.6px; margin-bottom: 8px; }
+  .branches .branch { display: block; width: 100%; text-align: left; background: var(--code);
+    border: 1px solid var(--border); border-radius: 4px; padding: 10px 14px; margin: 6px 0;
+    color: var(--text); cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .branches .branch:hover { background: var(--panel); border-color: var(--accent); }
+  .branches .branch .q { display: block; font-weight: 600; }
+  .branches .branch .why { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .branches .branch .warm { font-size: 11px; color: var(--good); float: right; }
+  .branches .branch .cold { font-size: 11px; color: var(--muted); float: right; }
+  .cached-badge { background: var(--good); color: #0d1117; padding: 1px 7px; border-radius: 3px;
+    font-size: 11px; font-weight: 600; margin-left: 8px; }
+  .markdown strong { color: var(--text); }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .ticket { color: var(--muted); font-size: 12px; }
+  .ticket code { background: var(--code); padding: 1px 6px; border-radius: 3px; }
+  .empty { color: var(--muted); padding: 12px 0; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 18px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚒︎ responser</h1>
+    <span class="sub">autonomous huddle answer engine</span>
+  </header>
+
+  <section class="panel">
+    <label for="corpus">corpus</label>
+    <select id="corpus"></select>
+
+    <label for="question" style="margin-top:12px">question</label>
+    <textarea id="question" placeholder="what do you want to ask?"></textarea>
+
+    <button id="ask">ask</button>
+    <div id="ticket" class="ticket" style="margin-top:8px"></div>
+  </section>
+
+  <section id="result" class="panel answer" style="display:none">
+    <div class="row">
+      <h2 id="rq" style="margin:0; flex:1;"></h2>
+      <span id="rstatus" class="status"></span>
+    </div>
+    <div id="rmeta" class="meta"></div>
+    <hr/>
+    <div id="ranswer" class="markdown"></div>
+
+    <div class="perspectives" id="rperspectives"></div>
+    <div class="perspectives dissent" id="rdissent"></div>
+    <div class="perspectives open" id="ropen"></div>
+    <div class="perspectives amara" id="ramara"></div>
+    <div id="rbranches" class="branches"></div>
+
+    <details id="rchunks">
+      <summary>chunk refs</summary>
+      <div id="rchunklist" class="meta"></div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <label>recent</label>
+    <div id="recent" class="empty">no tickets yet</div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+async function loadCorpora() {
+  const r = await fetch("/api/corpora");
+  const list = await r.json();
+  const sel = $("corpus");
+  sel.innerHTML = "";
+  if (!list.length) {
+    sel.innerHTML = '<option value="">(no corpora — run wiki-builder ingest first)</option>';
+    sel.disabled = true; $("ask").disabled = true;
+    return;
+  }
+  list.forEach(c => {
+    const o = document.createElement("option");
+    o.value = c.corpus;
+    o.textContent = `${c.corpus}  (${c.docs ?? 0} docs · ${c.chunks ?? 0} chunks)`;
+    sel.appendChild(o);
+  });
+  sel.disabled = false; $("ask").disabled = false;
+}
+
+async function loadRecent() {
+  const r = await fetch("/api/tickets?limit=10");
+  const list = await r.json();
+  const box = $("recent");
+  if (!list.length) { box.textContent = "no tickets yet"; box.className = "empty"; return; }
+  box.className = "";
+  box.innerHTML = list.map(t => `
+    <div class="row" style="margin: 4px 0">
+      <span class="status status-${t.status}">${t.status}</span>
+      <span style="flex:1; color:var(--muted)">${escapeHtml(t.question.slice(0, 80))}${t.question.length > 80 ? "…" : ""}</span>
+      <a href="#" data-id="${t.ticket_id}" class="viewLink" style="color:var(--accent)">view</a>
+    </div>
+  `).join("");
+  box.querySelectorAll(".viewLink").forEach(a => {
+    a.addEventListener("click", (e) => { e.preventDefault(); openTicket(a.dataset.id); });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function renderMarkdownish(s) {
+  // Minimal: bold + paragraphs + bullets
+  let html = escapeHtml(s);
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/^- (.+)$/gm, "<li>$1</li>").replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>");
+  return html.split(/\n\n+/).map(p => p.startsWith("<ul>") ? p : `<p>${p.replace(/\n/g, "<br/>")}</p>`).join("");
+}
+
+async function ask() {
+  const corpus = $("corpus").value;
+  const question = $("question").value.trim();
+  if (!corpus || !question) return;
+  $("ask").disabled = true;
+  $("ticket").textContent = "queuing…";
+
+  const r = await fetch("/api/tickets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ corpus, question }),
+  });
+  if (!r.ok) {
+    $("ticket").textContent = `error: ${await r.text()}`;
+    $("ask").disabled = false; return;
+  }
+  const { ticket_id } = await r.json();
+  $("ticket").innerHTML = `ticket <code>${ticket_id}</code>`;
+  await pollTicket(ticket_id);
+  $("ask").disabled = false;
+  loadRecent();
+}
+
+async function openTicket(id) {
+  $("ticket").innerHTML = `ticket <code>${id}</code>`;
+  await pollTicket(id);
+}
+
+async function pollTicket(id) {
+  for (let i = 0; i < 300; i++) { // up to ~10 min
+    const r = await fetch(`/api/tickets/${id}`);
+    if (!r.ok) { return; }
+    const t = await r.json();
+    renderTicket(t);
+    if (t.status === "done" || t.status === "error") return;
+    await new Promise(res => setTimeout(res, 2000));
+  }
+}
+
+function renderTicket(t) {
+  $("result").style.display = "block";
+  $("rq").textContent = t.question;
+  const st = $("rstatus");
+  st.textContent = t.status;
+  st.className = `status status-${t.status}`;
+  $("rmeta").textContent = `corpus: ${t.corpus}  ·  created: ${t.created_at}  ·  updated: ${t.updated_at}`;
+
+  if (t.status === "error") {
+    $("ranswer").innerHTML = `<p style="color:var(--bad)">${escapeHtml(t.error || "unknown error")}</p>`;
+    $("rperspectives").innerHTML = ""; $("rdissent").innerHTML = ""; $("ropen").innerHTML = "";
+    $("rchunklist").innerHTML = "";
+    return;
+  }
+
+  if (t.status !== "done" || !t.answer) {
+    $("ranswer").innerHTML = `<p class="meta">working…</p>`;
+    $("rperspectives").innerHTML = ""; $("rdissent").innerHTML = ""; $("ropen").innerHTML = "";
+    return;
+  }
+
+  const a = t.answer;
+  $("ranswer").innerHTML = renderMarkdownish(a.answer || "");
+
+  $("rperspectives").innerHTML = (a.perspectives || []).map(p => `
+    <div class="item">
+      <div class="name">${escapeHtml(p.persona)}</div>
+      <div>${escapeHtml(p.view)}</div>
+    </div>`).join("");
+
+  $("rdissent").innerHTML = (a.dissent || []).length
+    ? `<h2 style="font-size:14px; color:var(--warn); margin:16px 0 6px">dissent</h2>` +
+      a.dissent.map(d => `
+        <div class="item">
+          <div class="name">${escapeHtml(d.persona)}</div>
+          <div>${escapeHtml(d.concern)}</div>
+        </div>`).join("")
+    : "";
+
+  $("ropen").innerHTML = (a.open_questions || []).length
+    ? `<h2 style="font-size:14px; color:var(--muted); margin:16px 0 6px">open questions</h2>` +
+      a.open_questions.map(q => `<div class="item">${escapeHtml(q)}</div>`).join("")
+    : "";
+
+  // Amara auto-research block
+  const ar = a.amara_research;
+  if (ar && (ar.findings?.length || ar.error || ar.summary)) {
+    let html = `<h2 style="font-size:14px; color:#a371f7; margin:16px 0 6px">amara research <span class="meta" style="font-weight:normal">— web evidence, you decide if it settles the room</span></h2>`;
+    if (ar.error) {
+      html += `<div class="item"><div class="name">error</div><div>${escapeHtml(ar.error)}</div></div>`;
+    }
+    (ar.findings || []).forEach(f => {
+      const verdict = f.verdict || "inconclusive";
+      const srcs = (f.sources || []).map(s =>
+        `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.title || s.url)}</a>`
+      ).join(" · ");
+      html += `<div class="item">
+        <div class="name">${escapeHtml(f.open_question || "")} <span class="verdict verdict-${verdict}">${verdict}</span></div>
+        <div>${escapeHtml(f.evidence || "")}</div>
+        ${srcs ? `<div class="sources">sources: ${srcs}</div>` : ""}
+      </div>`;
+    });
+    if (ar.named_buyers?.length) {
+      html += `<div class="item"><div class="name">named buyers</div><div>${ar.named_buyers.map(b => `<span class="chip">${escapeHtml(b)}</span>`).join(" ")}</div></div>`;
+    }
+    if (ar.summary) {
+      html += `<div class="summary">${escapeHtml(ar.summary)}</div>`;
+    }
+    $("ramara").innerHTML = html;
+  } else {
+    $("ramara").innerHTML = "";
+  }
+
+  // Binary-tree next-branches (clickable; pre-warmed in background)
+  if ((a.next_branches || []).length) {
+    let bhtml = `<div class="label">if you keep pulling this thread</div>`;
+    a.next_branches.forEach(b => {
+      bhtml += `<button class="branch" data-q="${escapeHtml(b.question || "")}">
+        <span class="cold" id="warm-${escapeHtml((b.question||"").slice(0,40))}">…</span>
+        <span class="q">${escapeHtml(b.question || "")}</span>
+        <span class="why">${escapeHtml(b.why_likely || "")}</span>
+      </button>`;
+    });
+    $("rbranches").innerHTML = bhtml;
+    $("rbranches").querySelectorAll(".branch").forEach(btn => {
+      btn.addEventListener("click", () => {
+        $("question").value = btn.dataset.q;
+        ask();
+      });
+    });
+  } else {
+    $("rbranches").innerHTML = "";
+  }
+
+  $("rchunklist").innerHTML = (a.chunk_refs || []).map(c => `<span class="chip">${escapeHtml(c)}</span>`).join(" ");
+  const m = $("rmeta");
+  m.innerHTML = m.textContent +
+    `  ·  personas: ${(a.personas_chosen || []).map(p => `<span class="chip">${escapeHtml(p)}</span>`).join("")}` +
+    `  ·  confidence: ${escapeHtml(a.confidence || "—")}`;
+  if (a.cached) {
+    m.innerHTML += `<span class="cached-badge">cached</span>`;
+  }
+}
+
+$("ask").addEventListener("click", ask);
+loadCorpora();
+loadRecent();
+</script>
+</body>
+</html>

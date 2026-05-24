@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# huddle launcher. Resolves the package without requiring pip install.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+# Also expose wiki-builder package next door
+SIBLING="$(cd "$HERE/../wiki-builder" && pwd)"
+export PYTHONPATH="${HERE}:${SIBLING}${PYTHONPATH:+:$PYTHONPATH}"
+exec "${PYTHON_BIN:-python3}" -m huddle_engine "$@"

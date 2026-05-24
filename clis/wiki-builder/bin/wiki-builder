@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# wiki-builder launcher. Resolves the package without requiring pip install.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+export PYTHONPATH="${HERE}${PYTHONPATH:+:$PYTHONPATH}"
+exec "${PYTHON_BIN:-python3}" -m wiki_builder "$@"

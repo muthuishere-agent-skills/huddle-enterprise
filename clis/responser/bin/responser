@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# responser launcher. Resolves all sibling packages without pip install.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+CLIS="$(cd "$HERE/.." && pwd)"
+export PYTHONPATH="${HERE}:${CLIS}/wiki-builder:${CLIS}/huddle${PYTHONPATH:+:$PYTHONPATH}"
+exec "${PYTHON_BIN:-python3}" -m responser "$@"
