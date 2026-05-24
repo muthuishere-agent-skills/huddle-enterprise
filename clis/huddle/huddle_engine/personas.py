@@ -9,7 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ENV_ROSTER = "HUDDLE_PERSONA_DIR"
-DEFAULT_ROSTER = Path("/Users/muthuishere/muthu/gitworkspace/huddle-workspace/huddle/references/personas")
+
+# Vendored roster — huddle-enterprise/personas/ at the repo root. Lets the
+# autonomous huddle run without any dependency on the sibling huddle skill.
+DEFAULT_ROSTER = Path(__file__).resolve().parents[3] / "personas"
 
 
 @dataclass

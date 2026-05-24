@@ -23,13 +23,17 @@ Two tools work together:
 huddle-enterprise/
 ├── clis/
 │   ├── wiki-builder/         CLI + FastAPI HTTP server for wiki CRUD
-│   └── (responser later)
+│   ├── huddle/               Autonomous answer-engine CLI
+│   └── responser/            Ticket queue API + UI on top of huddle
 ├── skills/
-│   ├── wiki-builder/         Agent skill wrapping the CLI
+│   ├── wiki-builder/         Agent skill wrapping wiki-builder CLI
 │   └── huddle/               Autonomous huddle skill
-├── apps/                     UI (Phase 2)
+├── personas/                 Vendored persona roster (22 .md files);
+│                             read by huddle_engine.personas.load_all().
+│                             Self-contained — no dependency on sibling huddle skill.
+├── apps/responser-web/       Single-page UI for Responser
 └── infra/
-    └── vault/                Credentials (do not read; protected)
+    └── vault/                Credentials (do not read; protected; gitignored)
 ```
 
 ## State storage
